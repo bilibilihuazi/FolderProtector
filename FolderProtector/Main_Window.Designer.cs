@@ -39,6 +39,8 @@
             this.label_Lock = new AntdUI.Label();
             this.button_Set = new AntdUI.Button();
             this.folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
+            this.button_RefreshExplorer = new AntdUI.Button();
+            this.tooltipComponent = new AntdUI.TooltipComponent();
             this.SuspendLayout();
             // 
             // pageHeader
@@ -98,6 +100,7 @@
             this.switch_Hide.Size = new System.Drawing.Size(45, 23);
             this.switch_Hide.TabIndex = 5;
             this.switch_Hide.Text = "switch1";
+            this.switch_Hide.CheckedChanged += new AntdUI.BoolEventHandler(this.switch_Hide_CheckedChanged);
             // 
             // switch_Lock
             // 
@@ -106,6 +109,7 @@
             this.switch_Lock.Name = "switch_Lock";
             this.switch_Lock.Size = new System.Drawing.Size(45, 23);
             this.switch_Lock.TabIndex = 9;
+            this.switch_Lock.CheckedChanged += new AntdUI.BoolEventHandler(this.switch_Lock_CheckedChanged);
             // 
             // label_Lock
             // 
@@ -127,11 +131,24 @@
             this.button_Set.Type = AntdUI.TTypeMini.Success;
             this.button_Set.Click += new System.EventHandler(this.button_Set_Click);
             // 
+            // button_RefreshExplorer
+            // 
+            this.button_RefreshExplorer.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.button_RefreshExplorer.HandCursor = System.Windows.Forms.Cursors.Default;
+            this.button_RefreshExplorer.Location = new System.Drawing.Point(182, 92);
+            this.button_RefreshExplorer.Name = "button_RefreshExplorer";
+            this.button_RefreshExplorer.Size = new System.Drawing.Size(129, 34);
+            this.button_RefreshExplorer.TabIndex = 11;
+            this.button_RefreshExplorer.Text = "刷新资源管理器";
+            this.button_RefreshExplorer.Type = AntdUI.TTypeMini.Info;
+            this.button_RefreshExplorer.Click += new System.EventHandler(this.button_RefreshExplorer_Click);
+            // 
             // Main_Window
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(483, 131);
+            this.Controls.Add(this.button_RefreshExplorer);
             this.Controls.Add(this.button_Set);
             this.Controls.Add(this.switch_Lock);
             this.Controls.Add(this.label_Lock);
@@ -166,6 +183,8 @@
         private AntdUI.Label label_Lock;
         private AntdUI.Button button_Set;
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog;
+        private AntdUI.Button button_RefreshExplorer;
+        private AntdUI.TooltipComponent tooltipComponent;
     }
 }
 

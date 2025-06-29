@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualBasic.Devices;
 using Microsoft.Win32;
+using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -971,25 +972,50 @@ namespace FolderProtector
             }
         }
 
-
+        //通用文件夹对话框
+        public static string OpenCommonFolderDialog()
+        {
+            using (var dialog = new CommonOpenFileDialog())
+            {
+                dialog.IsFolderPicker = true;
+                dialog.EnsureFileExists = true;
+                dialog.Title = "请选择一个有效的文件夹";
+                dialog.ShowHiddenItems = true;
+                if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+                {
+                    return dialog.FileName;
+                }
+            }
+            return null;
+        }
 
         //变量========================================================================================
         public static string RegConifgPath = "SOFTWARE\\FolderProtector\\Conifg";
         public static string FolderPath;
+        public static bool HideState = false;
+        public static bool LockState = false;
         //事件========================================================================================
         public Main_Window()
         {
             InitializeComponent();
 
             AntdUI.Config.TextRenderingHighQuality = true;
+
+            tooltipComponent.SetTip(button_RefreshExplorer, "设置应用后看不到效果可以点击此处刷新资源管理器");
+            tooltipComponent.SetTip(switch_Hide, "设置文件夹的隐藏属性以及受系统保护属性");
+            tooltipComponent.SetTip(switch_Lock, "锁定文件夹，正常无法访问，需解锁后访问");
+            
+
+
         }
 
         private void button_FolderPathBrowser_Click(object sender, EventArgs e)
         {
-            if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
+            string temp = OpenCommonFolderDialog();
+            if (temp != null) 
             {
-                input_FolderPath.Text = folderBrowserDialog.SelectedPath;
-                FolderPath = folderBrowserDialog.SelectedPath;
+                input_FolderPath.Text = temp;
+                FolderPath = temp;
 
                 if (Convert.ToInt32(ReadRegistryValue(Registry.CurrentUser, $"{RegConifgPath}\\{FolderPath}", "HideState")) == 1)
                 {
@@ -1028,37 +1054,59 @@ namespace FolderProtector
             }
         }
 
-        private void button_Set_Click(object sender, EventArgs e)
+        private async void button_Set_Click(object sender, EventArgs e)
         {
             if (FolderPath != null && Directory.Exists(FolderPath)) 
             {
-                //隐藏
-                if (switch_Hide.Checked)
-                {
-                    FolderControl.HideFolder(FolderPath);
-                    FolderControl.AddSystemProtection(FolderPath);
-                    WriteRegistryValue(Registry.CurrentUser, $"{RegConifgPath}\\{FolderPath}", "HideState", 1, RegistryValueKind.DWord);
-                }
-                else
-                {
-                    FolderControl.ShowFolder(FolderPath);
-                    FolderControl.RemoveSystemProtection(FolderPath);
-                    WriteRegistryValue(Registry.CurrentUser, $"{RegConifgPath}\\{FolderPath}", "HideState", 0, RegistryValueKind.DWord);
-                }
+                button_Set.Loading = true;
 
-                //锁定
-                if (switch_Lock.Checked)
+                for (int i = 0; i < 2; i++)
                 {
-                    FolderControl.LockFolder(FolderPath);
-                    WriteRegistryValue(Registry.CurrentUser, $"{RegConifgPath}\\{FolderPath}", "LockState", 1, RegistryValueKind.DWord);
+                    //隐藏
+                    if (HideState == true)
+                    {
+
+                        FolderControl.HideFolder(FolderPath);
+                        FolderControl.AddSystemProtection(FolderPath);
+                        WriteRegistryValue(Registry.CurrentUser, $"{RegConifgPath}\\{FolderPath}", "HideState", 1, RegistryValueKind.DWord);
+                        Console.WriteLine("Hide-true");
+                    }
+                    else if (HideState == false)
+                    {
+
+                        FolderControl.ShowFolder(FolderPath);
+                        FolderControl.RemoveSystemProtection(FolderPath);
+                        WriteRegistryValue(Registry.CurrentUser, $"{RegConifgPath}\\{FolderPath}", "HideState", 0, RegistryValueKind.DWord);
+                        Console.WriteLine("Hide-false");
+
+                    }
+
+                    //锁定
+                    if (LockState == true)
+                    {
+
+                        FolderControl.LockFolder(FolderPath);
+                        WriteRegistryValue(Registry.CurrentUser, $"{RegConifgPath}\\{FolderPath}", "LockState", 1, RegistryValueKind.DWord);
+                        Console.WriteLine("Lock-true");
+                    }
+                    else if (LockState == false)
+                    {
+
+                        FolderControl.UnlockFolder(FolderPath);
+                        WriteRegistryValue(Registry.CurrentUser, $"{RegConifgPath}\\{FolderPath}", "LockState", 0, RegistryValueKind.DWord);
+                        Console.WriteLine("Lock-false");
+                    }
+
                 }
-                else
-                {
-                    FolderControl.UnlockFolder(FolderPath);
-                    WriteRegistryValue(Registry.CurrentUser, $"{RegConifgPath}\\{FolderPath}", "LockState", 0, RegistryValueKind.DWord);
-                }
+                
+
+                
+
+                
+
 
                 RefreshExplorer();
+
                 AntdUI.Notification.open(new AntdUI.Notification.Config(this, "", "", AntdUI.TType.None, AntdUI.TAlignFrom.TR)
                 {
                     Title = "操作成功！",
@@ -1066,7 +1114,7 @@ namespace FolderProtector
                     Icon = AntdUI.TType.Success
                 });
 
-
+                button_Set.Loading = false;
             }
             else
             {
@@ -1076,6 +1124,8 @@ namespace FolderProtector
                     Text = "在应用文件夹属性时发生错误！\n\n错误原因: 指定文件夹不存在",
                     Icon = AntdUI.TType.Error
                 });
+                Console.WriteLine(FolderPath);
+                Console.WriteLine(input_FolderPath.Text);
             }
             
         }
@@ -1098,7 +1148,7 @@ namespace FolderProtector
 
         private void input_FolderPath_TextChanged(object sender, EventArgs e)
         {
-            FolderPath = folderBrowserDialog.SelectedPath;
+            FolderPath = input_FolderPath.Text;
 
             if (Convert.ToInt32(ReadRegistryValue(Registry.CurrentUser, $"{RegConifgPath}\\{FolderPath}", "HideState")) == 1)
             {
@@ -1128,6 +1178,37 @@ namespace FolderProtector
         {
             
 
+        }
+
+        private void button_RefreshExplorer_Click(object sender, EventArgs e)
+        {
+            RefreshExplorer();
+        }
+
+        private void switch_Hide_CheckedChanged(object sender, AntdUI.BoolEventArgs e)
+        {
+            if (switch_Hide.Checked)
+            {
+                HideState = true;
+            }
+            else
+            {
+                HideState = false;
+            }
+            Console.WriteLine(HideState);
+        }
+
+        private void switch_Lock_CheckedChanged(object sender, AntdUI.BoolEventArgs e)
+        {
+            if (switch_Lock.Checked)
+            {
+                LockState = true;
+            }
+            else
+            {
+                LockState = false;
+            }
+            Console.WriteLine(LockState);
         }
     }
 }
